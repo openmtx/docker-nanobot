@@ -1,98 +1,79 @@
 # docker-nanobot
 
-Docker packaging for [nanobot](https://github.com/HKUDS/nanobot) — an open-source, ultra-lightweight personal AI agent framework.
+Run your own AI agent with a browser interface using Docker. No Python, Node.js, or code setup needed.
 
-## Quick Start
+## What you need
 
-To run nanobot as a container, copy the `docker-compose.yml` and create an empty `data/` directory:
+- **Docker** installed on your computer ([get Docker](https://docs.docker.com/get-docker/))
+- A terminal (Command Prompt, PowerShell, or Terminal)
 
-```bash
-mkdir -p data
-```
+## Setup
 
-### 1. Pull the image
+Create a folder for nanobot and copy these two files into it:
+
+- [`docker-compose.yml`](https://raw.githubusercontent.com/openmtx/docker-nanobot/master/docker-compose.yml)
+- Create an empty folder named `data`
+
+Then open a terminal in that folder and follow the steps below.
+
+### Step 1: Download the image
 
 ```bash
 docker compose pull
 ```
 
-### 2. Onboard
-
-This populates `data/.nanobot/` and creates a config file at `data/.nanobot/config.json`:
+### Step 2: Create a config file
 
 ```bash
 docker compose run --rm nanobot onboard
 ```
 
-### 3. Configure a model
+This creates the folder `data/.nanobot/` with a file called `config.json` inside — that's where your settings live.
+
+### Step 3: Tell nanobot which AI model to use
 
 ```bash
 docker compose run --rm nanobot onboard --wizard
 ```
 
-Choose **Quick Start**, sign up with a provider, and pick a model.  
-For a local llama.cpp instance, choose **"Other OpenAI-compatible"** and fill in the endpoint.
+A menu will appear. Choose **Quick Start**, then sign up with a provider (like OpenAI or Google) and pick a model.
 
-> **Important**: Do not use `http://localhost:<port>/v1` as the endpoint — the container resolves `localhost` to itself, not your host. Use a real host address (e.g. `http://192.168.1.x:8080/v1` or `http://host.docker.internal:8080/v1`).
+**Running a local model** (like llama.cpp on your computer)?
+Choose **"Other OpenAI-compatible"** instead, and enter your server address.
 
-After the wizard, `data/.nanobot/config.json` will contain entries similar to:
+> ⚠️ Don't use `http://localhost:...` — inside the container, "localhost" points to the container itself, not your computer. Use your computer's actual IP address instead (e.g. `http://192.168.1.5:8000/v1`), or try `http://host.docker.internal:8000/v1` (works on Docker Desktop).
 
-```json
-"model_presets": {
-  "primary": {
-    "label": "Primary",
-    "model": "<model-name>",
-    "provider": "custom",
-    "maxTokens": 8192,
-    "contextWindowTokens": 98304,
-    "temperature": 0.1,
-    "reasoningEffort": null
-  }
-},
-"providers": {
-  "custom": {
-    "apiKey": "<your-api-key>",
-    "apiBase": "http://<host-ip>:8000/v1",
-    "apiType": "auto",
-    "extraHeaders": null,
-    "extraBody": null,
-    "extraQuery": null,
-    "proxy": null,
-    "thinkingStyle": null
-  }
-}
-```
-
-### 4. Start the gateway
+### Step 4: Start nanobot
 
 ```bash
 docker compose up -d
 ```
 
-The WebUI is available at `http://localhost:8765`.
+### Step 5: Open the WebUI
 
-## Features
+Open your browser and go to [http://localhost:8765](http://localhost:8765).
 
-- Bundles nanobot, its WebUI, and all dependencies in a single image
-- WebUI available at `http://localhost:8765` after starting the gateway
-- Multi-channel support: Telegram, Discord, Slack, Mattermost, WeChat, Email, and more
-- Pre-configured healthcheck on port `18790`
-- Data volume mounted at `/data` for configuration and persistence
+That's it. You can now chat with your AI agent.
 
-## Building
+## How to stop
 
 ```bash
-docker build -t ghcr.io/openmtx/nanobot:latest .
+docker compose down
 ```
 
-The WebUI is built with Bun inside the Dockerfile — no host tooling required.
+## What's inside
+
+- A WebUI to chat with your agent (at port 8765)
+- Support for chat apps: Telegram, Discord, Slack, Mattermost, WeChat, Email, and more
+- A health-check endpoint at port 18790
+- All your data saved in the `data/` folder
 
 ## Links
 
-- **Official repo**: https://github.com/HKUDS/nanobot
+- **Official nanobot repo**: https://github.com/HKUDS/nanobot
 - **Documentation**: https://nanobot.wiki
-- **GitHub Container Registry**: `ghcr.io/openmtx/nanobot:latest`
+- **Pre-built image**: `ghcr.io/openmtx/nanobot:latest`
 
-## This Fork
+## About this image
 
-This image is built from a fork of nanobot at https://github.com/openmtx/nanobot, which adds a [Mattermost](https://mattermost.com) channel integration (not yet merged upstream).
+This image is built from a fork at https://github.com/openmtx/nanobot, which adds [Mattermost](https://mattermost.com) support (not yet merged upstream).
