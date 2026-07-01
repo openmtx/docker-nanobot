@@ -95,4 +95,4 @@ The WebUI is built with Bun inside the Dockerfile — no host tooling required.
 
 ## This Fork
 
-Adds a [Mattermost](https://mattermost.com) channel integration (not yet merged upstream).
+This image is built from a fork of nanobot at https://github.com/openmtx/nanobot, which adds a [Mattermost](https://mattermost.com) channel integration (not yet merged upstream).
