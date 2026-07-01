@@ -22,7 +22,7 @@ ENV HOME=/data
 WORKDIR /app
 
 COPY nanobot/ nanobot/
-COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/web/dist/
+COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/nanobot/web/dist/
 
 RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv pip install --system --no-cache -e "nanobot"
 
