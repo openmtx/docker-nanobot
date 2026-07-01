@@ -8,6 +8,9 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,4 +28,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/openmtx/nanobot:latest
+          tags: ghcr.io/openmtx/docker-nanobot:latest
