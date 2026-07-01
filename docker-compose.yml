@@ -1,0 +1,19 @@
+services:
+  nanobot:
+    image: local/nanobot:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/data:Z
+    command: ["gateway"]
+    restart: unless-stopped
+    ports:
+      # WebUI access
+      - 8765:8765
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18790/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

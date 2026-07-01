@@ -1,0 +1,4 @@
+[submodule "nanobot"]
+	path = nanobot
+	url = https://github.com/goodtiding5/nanobot.git
+	branch = dev
