@@ -1,14 +1,3 @@
-FROM oven/bun:1 AS webui-builder
-
-WORKDIR /app
-
-COPY nanobot/ /app/nanobot/
-
-WORKDIR /app/nanobot/webui
-
-RUN bun install && bun run build
-
-
 FROM ghcr.io/astral-sh/uv:latest AS uv-builder
 
 
@@ -18,7 +7,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates git gh bubblewrap openssh-client libmagic1 curl && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=uv-builder /usr/local/bin/uv /usr/local/bin/uv
+COPY --from=uv-builder /uv /usr/local/bin/uv
 
 RUN uv python install 3.12
 
@@ -29,9 +18,15 @@ ENV HOME=/data
 WORKDIR /app
 
 COPY nanobot/ nanobot/
-COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/nanobot/web/dist/
 
-RUN uv pip install --python 3.12 --system --no-cache -e "nanobot"
+WORKDIR /app/nanobot/webui
+RUN npm install && npm run build
+
+WORKDIR /app
+RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv venv --python 3.12 /app/.venv && \
+    uv pip install --python /app/.venv/bin/python3 --no-cache -e "nanobot"
+
+ENV PATH="/app/.venv/bin:$PATH"
 
 RUN npm install -g @steipete/summarize
 
