@@ -12,7 +12,7 @@ RUN bun install && bun run build
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates git bubblewrap openssh-client libmagic1 curl && \
+    apt-get install -y --no-install-recommends ca-certificates git gh bubblewrap openssh-client libmagic1 curl && \
     rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m -s /bin/bash -d /data nanobot
