@@ -13,7 +13,9 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates git gh bubblewrap openssh-client libmagic1 curl nodejs npm && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* && \
+    npm install -g n && \
+    n 24
 
 RUN useradd -m -s /bin/bash -d /data nanobot
 
