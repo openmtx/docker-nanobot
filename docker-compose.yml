@@ -1,9 +1,6 @@
 services:
   nanobot:
-    image: local/nanobot:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/openmtx/nanobot:latest
     volumes:
       - ./data:/data:Z
     command: ["gateway"]
