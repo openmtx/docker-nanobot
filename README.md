@@ -4,11 +4,44 @@ Docker packaging for [nanobot](https://github.com/HKUDS/nanobot) — an open-sou
 
 ## Quick Start
 
+To run nanobot as a container, copy the `docker-compose.yml` and create an empty `data/` directory:
+
+```bash
+mkdir -p data
+```
+
+### 1. Pull the image
+
+```bash
+docker compose pull
+```
+
+### 2. Onboard
+
+This populates `data/.nanobot/` and creates a config file at `data/.nanobot/config.json`:
+
+```bash
+docker compose run --rm nanobot onboard
+```
+
+### 3. Configure a model
+
+```bash
+docker compose run --rm nanobot onboard --wizard
+```
+
+Choose **Quick Start**, sign up with a provider, and pick a model.  
+For a local llama.cpp instance, choose **"Other OpenAI-compatible"** and fill in the endpoint.
+
+> **Important**: Do not use `http://localhost:<port>/v1` as the endpoint — the container resolves `localhost` to itself, not your host. Use a real host address (e.g. `http://192.168.1.x:8080/v1` or `http://host.docker.internal:8080/v1`).
+
+### 4. Start the gateway
+
 ```bash
 docker compose up -d
 ```
 
-This starts the gateway on port `8765` with the WebUI and WebSocket channel access. Data persists in `./data/`.
+The WebUI is available at `http://localhost:8765`.
 
 ## Features
 
@@ -25,10 +58,6 @@ docker build -t ghcr.io/openmtx/nanobot:latest .
 ```
 
 The WebUI is built with Bun inside the Dockerfile — no host tooling required.
-
-## Configuration
-
-Place your `config.json` at `./data/config.json`. See the [official docs](https://nanobot.wiki) for all available options.
 
 ## Links
 
