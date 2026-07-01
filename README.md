@@ -35,6 +35,34 @@ For a local llama.cpp instance, choose **"Other OpenAI-compatible"** and fill in
 
 > **Important**: Do not use `http://localhost:<port>/v1` as the endpoint — the container resolves `localhost` to itself, not your host. Use a real host address (e.g. `http://192.168.1.x:8080/v1` or `http://host.docker.internal:8080/v1`).
 
+After the wizard, `data/.nanobot/config.json` will contain entries similar to:
+
+```json
+"model_presets": {
+  "primary": {
+    "label": "Primary",
+    "model": "<model-name>",
+    "provider": "custom",
+    "maxTokens": 8192,
+    "contextWindowTokens": 98304,
+    "temperature": 0.1,
+    "reasoningEffort": null
+  }
+},
+"providers": {
+  "custom": {
+    "apiKey": "<your-api-key>",
+    "apiBase": "http://<host-ip>:8000/v1",
+    "apiType": "auto",
+    "extraHeaders": null,
+    "extraBody": null,
+    "extraQuery": null,
+    "proxy": null,
+    "thinkingStyle": null
+  }
+}
+```
+
 ### 4. Start the gateway
 
 ```bash
