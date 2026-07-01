@@ -9,13 +9,16 @@ WORKDIR /app/nanobot/webui
 RUN bun install && bun run build
 
 
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+FROM ghcr.io/astral-sh/uv:latest AS uv-builder
+
+
+FROM node:24-slim
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates git gh bubblewrap openssh-client libmagic1 curl nodejs npm && \
-    rm -rf /var/lib/apt/lists/* && \
-    npm install -g n && \
-    n 24
+    apt-get install -y --no-install-recommends python3 ca-certificates git gh bubblewrap openssh-client libmagic1 curl && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=uv-builder /usr/local/bin/uv /usr/local/bin/uv
 
 RUN useradd -m -s /bin/bash -d /data nanobot
 
@@ -26,18 +29,14 @@ WORKDIR /app
 COPY nanobot/ nanobot/
 COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/nanobot/web/dist/
 
-RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv pip install --system --no-cache -e "nanobot"
+RUN uv pip install --system --no-cache -e "nanobot"
 
 RUN npm install -g @steipete/summarize
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Gateway health endpoint
-EXPOSE 18790
-
-# Opional WebUI/WebSocket channel ports
-EXPOSE 8765
+EXPOSE 18790 8765
 
 USER nanobot
 
