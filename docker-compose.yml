@@ -5,6 +5,11 @@ services:
       - ./data:/data:Z
     command: ["gateway"]
     restart: unless-stopped
+    # Uncomment the lines below on Linux to allow the container to
+    # reach the host machine via host.docker.internal (e.g. for a
+    # local OpenAI-compatible API running on the host).
+    #extra_hosts:
+    #  - "host.docker.internal:host-gateway"
     ports:
       # WebUI access
       - 8765:8765

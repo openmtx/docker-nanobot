@@ -43,7 +43,7 @@ A menu will appear. Choose **Quick Start**, then sign up with a provider (like O
 **Running a local model** (like llama.cpp on your computer)?
 Choose **"Other OpenAI-compatible"** instead, and enter your server address.
 
-> ⚠️ Don't use `http://localhost:...` — inside the container, "localhost" points to the container itself, not your computer. Use your computer's actual IP address instead (e.g. `http://192.168.1.5:8000/v1`), or try `http://host.docker.internal:8000/v1` (works on Docker Desktop).
+> ⚠️ Don't use `http://localhost:...` — inside the container, "localhost" points to the container itself, not your computer. Use your computer's actual IP address instead (e.g. `http://192.168.1.5:8000/v1`), or try `http://host.docker.internal:8000/v1`. On Linux, `host.docker.internal` does not resolve automatically — uncomment the `extra_hosts` section in `docker-compose.yml` to enable it.
 
 ### Step 4: Start nanobot
 
