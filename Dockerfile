@@ -1,3 +1,14 @@
+FROM oven/bun:1 AS webui-builder
+
+WORKDIR /app
+
+COPY nanobot/ /app/nanobot/
+
+WORKDIR /app/nanobot/webui
+
+RUN bun install && bun run build
+
+
 FROM ghcr.io/astral-sh/uv:latest AS uv-builder
 
 
@@ -18,11 +29,8 @@ ENV HOME=/data
 WORKDIR /app
 
 COPY nanobot/ nanobot/
+COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/nanobot/web/dist/
 
-WORKDIR /app/nanobot/webui
-RUN npm install && npm run build
-
-WORKDIR /app
 RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv venv --python 3.12 /app/.venv && \
     uv pip install --python /app/.venv/bin/python3 --no-cache -e "nanobot"
 
