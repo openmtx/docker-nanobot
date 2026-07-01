@@ -1,5 +1,7 @@
 # docker-nanobot
 
+[![Build](https://github.com/openmtx/docker-nanobot/actions/workflows/build.yml/badge.svg)](https://github.com/openmtx/docker-nanobot/actions/workflows/build.yml)
+
 Run your own AI agent with a browser interface using Docker. No Python, Node.js, or code setup needed.
 
 ## What you need
