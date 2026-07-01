@@ -12,15 +12,15 @@ RUN bun install && bun run build
 FROM ghcr.io/astral-sh/uv:latest AS uv-builder
 
 
-FROM node:24-slim
+FROM python:3.12-slim-bookworm
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates git gh bubblewrap openssh-client libmagic1 curl && \
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
+    apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv-builder /uv /usr/local/bin/uv
-
-RUN uv python install 3.12
 
 RUN useradd -m -s /bin/bash -d /data nanobot
 
@@ -31,12 +31,9 @@ WORKDIR /app
 COPY nanobot/ nanobot/
 COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/nanobot/web/dist/
 
-RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv venv --python 3.12 /app/.venv && \
-    uv pip install --python /app/.venv/bin/python3 --no-cache -e "nanobot"
+RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv pip install --system --no-cache -e "nanobot"
 
-ENV PATH="/app/.venv/bin:$PATH"
-
-RUN npm install -g @steipete/summarize
+RUN npm install -g @steipete/summarize && npm cache clean --force
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
