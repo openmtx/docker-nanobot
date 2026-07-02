@@ -25,8 +25,21 @@ COPY --from=uv-builder /uv /usr/local/bin/uv
 RUN useradd -m -s /bin/bash -d /data nanobot
 
 ENV HOME=/data
+
+# Max seconds to wait between SSE stream chunks before treating an LLM stream
+# as stalled. Applies to all streaming providers (Anthropic, OpenAI-compat,
+# Bedrock, Codex). Default in code is 90s; raised to 300s here for slower models.
 ENV NANOBOT_STREAM_IDLE_TIMEOUT_S=300
+
+# HTTP request timeout (connect+read+write+pool) for the OpenAI-compatible and
+# GitHub Copilot clients. Bounds each whole request to the model endpoint.
+# Default in code is 120s; raised to 300s here.
 ENV NANOBOT_OPENAI_COMPAT_TIMEOUT_S=300
+
+# Outer wall-clock cap wrapping every non-streaming LLM call in the agent loop
+# (a fallback if a provider client has no timeout of its own). Set to 0 to
+# disable. Code default is 300s.
+ENV NANOBOT_LLM_TIMEOUT_S=300
 
 WORKDIR /app
 

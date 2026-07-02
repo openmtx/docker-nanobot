@@ -7,6 +7,7 @@ services:
     environment:
       - NANOBOT_STREAM_IDLE_TIMEOUT_S=300
       - NANOBOT_OPENAI_COMPAT_TIMEOUT_S=300
+      - NANOBOT_LLM_TIMEOUT_S=300
     restart: unless-stopped
     # Uncomment the lines below on Linux to allow the container to
     # reach the host machine via host.docker.internal (e.g. for a
