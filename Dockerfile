@@ -25,6 +25,8 @@ COPY --from=uv-builder /uv /usr/local/bin/uv
 RUN useradd -m -s /bin/bash -d /data nanobot
 
 ENV HOME=/data
+ENV NANOBOT_STREAM_IDLE_TIMEOUT_S=300
+ENV NANOBOT_OPENAI_COMPAT_TIMEOUT_S=300
 
 WORKDIR /app
 
