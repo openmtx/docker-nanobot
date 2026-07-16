@@ -1,4 +1,8 @@
 #!/bin/sh
+# Add user-local bin to PATH if it exists (e.g., mst, webclaw from workspace skills)
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH="$HOME/.local/bin:$PATH"
+fi
 home="$HOME"
 if [ ! -d "$home" ] || [ ! -w "$home" ]; then
     owner_uid=$(stat -c %u "$home" 2>/dev/null || stat -f %u "$home" 2>/dev/null)
