@@ -22,9 +22,20 @@ RUN apt-get update && \
 
 COPY --from=uv-builder /uv /usr/local/bin/uv
 
+# Bun powers the native terminal UI (and is the WebUI build tool upstream).
+COPY --from=webui-builder /usr/local/bin/bun /usr/local/bin/bun
+RUN ln -s /usr/local/bin/bun /usr/local/bin/bunx
+
 RUN useradd -m -s /bin/bash -d /data nanobot
 
 ENV HOME=/data
+
+# Install into a virtualenv owned by the runtime user so `nanobot plugins
+# enable <channel>` can add channel dependencies without root.
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+RUN uv venv --seed "$VIRTUAL_ENV"
 
 # Max seconds to wait between SSE stream chunks before treating an LLM stream
 # as stalled. Applies to all streaming providers (Anthropic, OpenAI-compat,
@@ -36,17 +47,28 @@ ENV NANOBOT_STREAM_IDLE_TIMEOUT_S=300
 # Default in code is 120s; raised to 300s here.
 ENV NANOBOT_OPENAI_COMPAT_TIMEOUT_S=300
 
-# Outer wall-clock cap wrapping every non-streaming LLM call in the agent loop
-# (a fallback if a provider client has no timeout of its own). Set to 0 to
-# disable. Code default is 300s.
-ENV NANOBOT_LLM_TIMEOUT_S=300
-
 WORKDIR /app
 
 COPY nanobot/ nanobot/
 COPY --from=webui-builder /app/nanobot/nanobot/web/dist/ nanobot/nanobot/web/dist/
 
-RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv pip install --system --no-cache -e "nanobot[mst]"
+# Bake selected channel SDKs into the image (comma-separated, e.g.
+# `--build-arg NANOBOT_CHANNELS=telegram,slack`).
+ARG NANOBOT_CHANNELS=
+
+RUN NANOBOT_SKIP_WEBUI_BUILD=1 uv pip install --python "$VIRTUAL_ENV/bin/python" --no-cache "./nanobot[mst]" && \
+    if [ -n "$NANOBOT_CHANNELS" ]; then \
+        cd nanobot && \
+        for channel in $(printf '%s' "$NANOBOT_CHANNELS" | tr ',' ' '); do \
+            PIP_NO_CACHE_DIR=1 python scripts/install_channel_dependencies.py "$channel" || exit 1; \
+        done; \
+    fi && \
+    chown -R nanobot:nanobot "$VIRTUAL_ENV"
+
+# Pre-install the native TUI dependencies so `nanobot agent` starts without a
+# network fetch, and keep the checkout writable for its launcher.
+RUN cd nanobot/tui && bun install --frozen-lockfile && \
+    chown -R nanobot:nanobot /app/nanobot/tui
 
 RUN npm install -g @steipete/summarize && npm cache clean --force
 
@@ -58,3 +80,4 @@ EXPOSE 18790 8765
 USER nanobot
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["gateway"]

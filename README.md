@@ -70,6 +70,57 @@ docker compose down
 - A health-check endpoint at port 18790
 - All your data saved in the `data/` folder
 
+## Upgrading from 0.3.0
+
+This image ships nanobot **0.3.5**, which includes breaking config changes.
+
+1. **Back up `data/` and stop the old container first.** Sessions moved from
+   `<workspace>/sessions/` to `<config-dir>/sessions/<workspace-id>/` and are
+   auto-migrated on first start (legacy files are deleted after a verified copy).
+   Never run the 0.3.0 and 0.3.5 containers against the same `data/` folder.
+2. **Email:** `verifySpf`/`verifyDkim` now require `trustedAuthservIds` (the
+   receiver's exact `authserv-id`), otherwise the channel will not start.
+3. **Dream:** `agents.defaults.dream.modelOverride` must name a key from
+   `modelPresets`, not a raw model ID.
+4. **Defaults changed:** `channels.sendToolHints` is now `true`,
+   `agents.defaults.maxConcurrentSubagents` is `4`, and an omitted timezone is
+   auto-detected (UTC in this container unless `TZ` is set).
+   `NANOBOT_LLM_TIMEOUT_S` is no longer read, and
+   `NANOBOT_MAX_CONCURRENT_REQUESTS` is unlimited when unset; this Compose file
+   pins it to `3` to match 0.3.0.
+5. **Channels:** chat SDKs are no longer bundled. Bake the ones you need at build
+   time so they survive container recreation:
+
+   ```bash
+   NANOBOT_CHANNELS=telegram,slack docker compose build
+   ```
+
+   `nanobot plugins enable <channel>` also installs into the image's virtualenv
+   and is handy for trying a channel in a one-off `docker compose run`, but that
+   install lives in the container's writable layer and is lost when it is
+   removed.
+
+6. **Terminal:** Bun is bundled, so interactive `agent` opens the native TUI;
+   `--classic` keeps the legacy prompt. Both need an interactive terminal, while
+   `-m` runs one-shot:
+
+   ```bash
+   docker compose run --rm nanobot agent -m "Hello!"
+   docker compose run --rm -it nanobot agent
+   docker compose run --rm -it nanobot agent --classic
+   ```
+
+After upgrading, run `docker compose run --rm nanobot status` and review the
+gateway logs for config or migration warnings.
+
+To roll back to 0.3.0, stop the container and copy sessions back to the
+workspace first:
+
+```bash
+docker compose run --rm nanobot sessions restore-workspace \
+  --workspace /data/.nanobot/workspace
+```
+
 ## Links
 
 - **Official nanobot repo**: https://github.com/HKUDS/nanobot
@@ -78,4 +129,4 @@ docker compose down
 
 ## About this image
 
-This image is built from a fork at https://github.com/openmtx/nanobot, which adds [Mattermost](https://mattermost.com) support (not yet merged upstream).
+This image is built from a fork at https://github.com/goodtiding5/nanobot, which adds [Mattermost](https://mattermost.com) support (not yet merged upstream).

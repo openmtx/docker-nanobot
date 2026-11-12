@@ -1,0 +1,10 @@
+.git
+**/.git
+.gitmodules
+.github
+data
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.py[cod]
+**/*.log
