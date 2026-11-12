@@ -51,9 +51,17 @@ Choose **"Other OpenAI-compatible"** instead, and enter your server address.
 docker compose up -d
 ```
 
+On first start, the logs print the WebUI password (or use the
+`NANOBOT_WEB_TOKEN` value you supplied):
+
+```bash
+docker compose logs nanobot | grep -i "WebUI password"
+```
+
 ### Step 5: Open the WebUI
 
-Open your browser and go to [http://localhost:8765](http://localhost:8765).
+Open your browser and go to [http://localhost:8765](http://localhost:8765),
+then enter the WebUI password when prompted.
 
 That's it. You can now chat with your AI agent.
 
@@ -70,27 +78,53 @@ docker compose down
 - A health-check endpoint at port 18790
 - All your data saved in the `data/` folder
 
-## Upgrading from 0.3.0
+## Upgrading from 0.3.5 (or older)
 
-This image ships the nanobot release pinned by the `nanobot` submodule
-(`nanobot/pyproject.toml`), which includes breaking config changes.
+This image now ships the nanobot release pinned by the `nanobot` submodule
+(`nanobot/pyproject.toml`), currently **0.4.0**. Stop the old container and back
+up the complete `data/` folder before starting the new image.
 
-1. **Back up `data/` and stop the old container first.** Sessions moved from
-   `<workspace>/sessions/` to `<config-dir>/sessions/<workspace-id>/` and are
-   auto-migrated on first start (legacy files are deleted after a verified copy).
-   Never run the 0.3.0 and 0.3.5 containers against the same `data/` folder.
-2. **Email:** `verifySpf`/`verifyDkim` now require `trustedAuthservIds` (the
-   receiver's exact `authserv-id`), otherwise the channel will not start.
-3. **Dream:** `agents.defaults.dream.modelOverride` must name a key from
-   `modelPresets`, not a raw model ID.
-4. **Defaults changed:** `channels.sendToolHints` is now `true`,
-   `agents.defaults.maxConcurrentSubagents` is `4`, and an omitted timezone is
-   auto-detected (UTC in this container unless `TZ` is set).
-   `NANOBOT_LLM_TIMEOUT_S` is no longer read, and
-   `NANOBOT_MAX_CONCURRENT_REQUESTS` is unlimited when unset; this Compose file
-   pins it to `3` to match 0.3.0.
-5. **Channels:** chat SDKs are no longer bundled. Bake the ones you need at build
-   time so they survive container recreation:
+1. **Sessions move to SQLite and are one-way.** On first start, JSONL history is
+   imported into `<config-dir>/sessions/<workspace-id>/sessions.sqlite3`; the
+   source files are retained under `jsonl-backup/`. Keep the old
+   `<config-dir>/webui/` directory too: it holds saved preferences and the
+   legacy history backups. 0.4.x is the last release line that imports legacy
+   JSONL, so installations with only JSONL data must upgrade through 0.4.x
+   before using 0.5.0. The old `sessions restore-workspace` command has been
+   removed: rolling back now requires restoring a complete pre-upgrade backup.
+   Never run 0.3.5 and 0.4.0 against the same `data/` folder at the same time.
+
+2. **WebUI bind and password are fixed automatically.** 0.3.5 configs bind to
+   `127.0.0.1`, which Docker port publishing cannot reach. With
+   `NANOBOT_DOCKER_BOOTSTRAP=1` (set in this Compose file), startup changes only
+   loopback/missing `channels.websocket.host` values to `0.0.0.0`, adds a
+   `tokenIssueSecret` when no WebUI auth exists, and writes
+   `config.json.pre-0.4.0.bak` first. The generated password is printed in the
+   logs. Set `NANOBOT_WEB_TOKEN` to choose it yourself. To manage config
+   manually, set `NANOBOT_DOCKER_BOOTSTRAP=0` and configure `host: "0.0.0.0"`
+   plus `tokenIssueSecret` (or `token`) yourself.
+
+3. **Configuration migrations.** Review the gateway logs after the first start:
+
+   - **Proxy:** one legacy per-feature proxy address migrates to `network.proxy`
+     and affected features get `useProxy: true`. Configs with several different
+     proxy addresses must choose one before upgrading, otherwise startup fails.
+   - **OpenAI API selector:** `providers.openai.apiType` / `api_type` is
+     migrated to the new `api` setting. Saving with 0.4.0 completes the
+     migration; the old field is accepted only through the next release.
+   - **Shell timeout:** `tools.exec.timeout` is still a hard-runtime alias, so
+     explicit values are preserved, but the new default is `3600` seconds
+     (previously `60`). New `idleTimeout`/`idleAction` settings now control
+     inactivity separately.
+   - **Concurrency:** `NANOBOT_MAX_CONCURRENT_REQUESTS` remains unlimited when
+     unset; this Compose file pins it to `3`. `NANOBOT_LLM_TIMEOUT_S` is no
+     longer read.
+   - **Coming from 0.3.0:** email `verifySpf`/`verifyDkim` also require
+     `trustedAuthservIds`, and `agents.defaults.dream.modelOverride` must name
+     a key from `modelPresets` rather than a raw model ID.
+
+4. **Channels:** chat SDKs are not bundled. Bake the ones you need at build time
+   so they survive container recreation:
 
    ```bash
    NANOBOT_CHANNELS=telegram,slack docker compose build
@@ -101,7 +135,14 @@ This image ships the nanobot release pinned by the `nanobot` submodule
    install lives in the container's writable layer and is lost when it is
    removed.
 
-6. **Terminal:** Bun is bundled, so interactive `agent` opens the native TUI;
+5. **Do not use the in-app updater in this container.** The 0.4.0 WebUI updater
+   targets installer/uv environments, not container images. Rebuild or pull the
+   image and recreate the service with the same `data/` volume. The obsolete
+   `update-setup` workspace skill is no longer bundled; do not replay upgrade
+   commands saved by it.
+
+6. **Terminal:** Bun and the matching TUI source are bundled, so interactive
+   `agent` opens the native TUI without downloading a release archive;
    `--classic` keeps the legacy prompt. Both need an interactive terminal, while
    `-m` runs one-shot:
 
@@ -111,16 +152,10 @@ This image ships the nanobot release pinned by the `nanobot` submodule
    docker compose run --rm -it nanobot agent --classic
    ```
 
-After upgrading, run `docker compose run --rm nanobot status` and review the
-gateway logs for config or migration warnings.
-
-To roll back to 0.3.0, stop the container and copy sessions back to the
-workspace first:
-
-```bash
-docker compose run --rm nanobot sessions restore-workspace \
-  --workspace /data/.nanobot/workspace
-```
+After upgrading, run `docker compose run --rm nanobot status`, confirm the
+running version in the WebUI, open an older conversation, and send a new
+message. Check the gateway logs for config, migration, or channel warnings. Keep
+the pre-upgrade backup until this verification succeeds.
 
 ## Links
 

@@ -16,8 +16,25 @@ EOF
 fi
 
 dir="$HOME/.nanobot"
-if [ ! -f "$dir/config.json" ]; then
-    nanobot onboard
+
+# A user-selected config is owned by the CLI, including its first-run behavior.
+explicit_config=0
+for argument in "$@"; do
+    case "$argument" in
+        --config|--config=*|-c*) explicit_config=1; break ;;
+    esac
+done
+
+# Prepare the default instance before starting a service. `onboard` manages its
+# own creation flow, so do not pre-create a config and trigger an overwrite
+# prompt before it runs.
+if [ "$explicit_config" = "0" ] && [ "${1:-}" != "onboard" ]; then
+    if [ "${NANOBOT_DOCKER_BOOTSTRAP:-0}" = "1" ]; then
+        # Creates a container-friendly config and upgrades 0.3.x loopback binds.
+        python /usr/local/bin/docker-config.py "$dir/config.json" || exit 1
+    elif [ ! -f "$dir/config.json" ]; then
+        nanobot onboard
+    fi
 fi
 
 exec nanobot "$@"

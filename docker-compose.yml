@@ -9,9 +9,16 @@ services:
       - ./data:/data:Z
     command: ["gateway"]
     environment:
+      # Initialize a container-friendly config on first boot. On upgrades this
+      # also moves 0.3.x loopback binds to 0.0.0.0 and adds a WebUI password
+      # (the original config is backed up next to it).
+      - NANOBOT_DOCKER_BOOTSTRAP=1
+      # Optional: choose the WebUI password instead of using the generated one
+      # printed in the first-boot logs.
+      - NANOBOT_WEB_TOKEN=${NANOBOT_WEB_TOKEN:-}
       - NANOBOT_STREAM_IDLE_TIMEOUT_S=300
       - NANOBOT_OPENAI_COMPAT_TIMEOUT_S=300
-      # Concurrent agent turns; 0/unset means unlimited in 0.3.5. 3 matches the
+      # Concurrent agent turns; 0/unset means unlimited in 0.4.0. 3 matches the
       # 0.3.0 default and keeps a small container from overloading a provider.
       - NANOBOT_MAX_CONCURRENT_REQUESTS=3
       # Uncomment to match your local timezone (container default is UTC).
@@ -30,4 +37,5 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 15s
+      # Session/history migrations can take a while on a large data volume.
+      start_period: 60s
