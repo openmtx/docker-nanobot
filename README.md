@@ -157,6 +157,26 @@ running version in the WebUI, open an older conversation, and send a new
 message. Check the gateway logs for config, migration, or channel warnings. Keep
 the pre-upgrade backup until this verification succeeds.
 
+## Testing the mst proxy
+
+If Web search uses the `mst` provider through the shared Web access proxy, run
+this inside the container to prove the proxy is actually used:
+
+```bash
+docker compose exec -T nanobot python - < scripts/test-mst-proxy.py
+```
+
+The script sets `network.proxy` and **Use proxy** for Web access the same way
+the gateway config does, then runs a real mst search through a logging proxy.
+It prints each search-engine host that went through the proxy and ends with:
+
+```
+PASS: mst search ran through the configured proxy
+```
+
+No `CONNECT` lines means the mst binding ignored the proxy; an `Error:` result
+means the search itself failed.
+
 ## Links
 
 - **Official nanobot repo**: https://github.com/HKUDS/nanobot
