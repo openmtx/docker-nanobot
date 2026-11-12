@@ -19,7 +19,7 @@ jobs:
       - name: Read nanobot version
         id: nanobot
         run: |
-          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' nanobot/pyproject.toml | head -n 1)
+          version=$(python3 -c "import tomllib; print(tomllib.load(open('nanobot/pyproject.toml', 'rb'))['project']['version'])")
           if [ -z "$version" ]; then
             echo "Could not read version from nanobot/pyproject.toml" >&2
             exit 1

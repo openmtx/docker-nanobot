@@ -72,7 +72,8 @@ docker compose down
 
 ## Upgrading from 0.3.0
 
-This image ships nanobot **0.3.5**, which includes breaking config changes.
+This image ships the nanobot release pinned by the `nanobot` submodule
+(`nanobot/pyproject.toml`), which includes breaking config changes.
 
 1. **Back up `data/` and stop the old container first.** Sessions moved from
    `<workspace>/sessions/` to `<config-dir>/sessions/<workspace-id>/` and are
