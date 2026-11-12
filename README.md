@@ -81,7 +81,7 @@ docker compose down
 ## Upgrading from 0.3.5 (or older)
 
 This image now ships the nanobot release pinned by the `nanobot` submodule
-(`nanobot/pyproject.toml`), currently **0.4.0**. Stop the old container and back
+(`nanobot/pyproject.toml`), currently **0.4.1**. Stop the old container and back
 up the complete `data/` folder before starting the new image.
 
 1. **Sessions move to SQLite and are one-way.** On first start, JSONL history is
